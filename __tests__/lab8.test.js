@@ -91,13 +91,32 @@ describe('Basic user flow for Website', () => {
     // Reload the page, then select all of the <product-item> elements, and check every
     // element to make sure that all of their buttons say "Remove from Cart".
     // Also check to make sure that #cart-count is still 20
+    await page.reload()
+
+    const productItems = await page.$$('product-item');
+    
+    for(let i = 0; i < productItems.length; i++) {
+    let shadow = await productItems[i].getProperty("shadowRoot");
+    let button = await shadow.$('button');
+    let buttonInner = await button.getProperty('innerHTML');
+    expect(buttonInner['_remoteObject'].value).toBe('Remove from Cart');
+    }
+
+    var myCount = await page.$('#cart-count');
+    myCount = await myCount.getProperty('innerHTML');
+    expect(myCount["_remoteObject"].value).toBe('20');
   }, 10000);
 
   // Check to make sure that the cart in localStorage is what you expect
   it('Checking the localStorage to make sure cart is correct', async () => {
     // TODO - Step 5
-    // At this point he item 'cart' in localStorage should be 
+    let itemCart = await page.$eval('main', () => {
+      return window.localStorage.getItem('cart')
+    });
+
+    // At this point the item 'cart' in localStorage should be 
     // '[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]', check to make sure it is
+    expect(itemCart).toBe('[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]')
   });
 
   // Checking to make sure that if you remove all of the items from the cart that the cart
@@ -107,6 +126,17 @@ describe('Basic user flow for Website', () => {
     // TODO - Step 6
     // Go through and click "Remove from Cart" on every single <product-item>, just like above.
     // Once you have, check to make sure that #cart-count is now 0
+    let prodItems = await page.$$('product-item');
+
+    for(let i = 0; i < prodItems.length; i++) {
+      let shadow = await prodItems[i].getProperty('shadowRoot');
+      let addToCart = await shadow.$('button');
+      await addToCart.click();
+    }
+
+    let cartCount = await page.$('#cart-count');
+    let innerText = await cartCount.getProperty('innerText');
+    expect(innerText['_remoteObject'].value).toBe('0')
   }, 10000);
 
   // Checking to make sure that it remembers us removing everything from the cart
@@ -117,6 +147,19 @@ describe('Basic user flow for Website', () => {
     // Reload the page once more, then go through each <product-item> to make sure that it has remembered nothing
     // is in the cart - do this by checking the text on the buttons so that they should say "Add to Cart".
     // Also check to make sure that #cart-count is still 0
+    await page.reload();
+    const prodItems = await page.$$("product-item");
+
+    for (let i = 0; i < prodItems.length; i++) {
+      let itemShadowRoot = await prodItems[i].getProperty("shadowRoot");
+      let button = await itemShadowRoot.$("button");
+      let buttonInner = await button.getProperty("innerHTML");
+      expect(buttonInner["_remoteObject"].value).toBe("Add to Cart");
+    }
+
+    var cartCount = await page.$("#cart-count");
+    cartCount = await cartCount.getProperty("innerHTML");
+    expect(cartCount["_remoteObject"].value).toBe("0");
   }, 10000);
 
   // Checking to make sure that localStorage for the cart is as we'd expect for the
